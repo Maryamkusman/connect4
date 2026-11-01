@@ -5,6 +5,8 @@ Play Connect 4 against a computer opponent that uses **minimax**,
 terminal.
 
 Pure Python and the standard library only. Nothing to install.
+<img width="1770" height="869" alt="image" src="https://github.com/user-attachments/assets/766ce651-cb7c-4a59-8566-503ad9d43513" />
+
 
 ```
 AI plays column 5 (depth 12, 667,648 positions, 2.00s, eval -40)
