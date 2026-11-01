@@ -98,6 +98,20 @@ thinks it is ahead. When it can prove the result, it says
 
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) has the full design walkthrough.
 
+## Deploying
+
+The browser version runs on any host that can run a Python web process. On
+[Render](https://render.com), create a free **Web Service** from this repo with:
+
+| Setting | Value |
+|---------|-------|
+| Runtime | Python |
+| Build command | `pip install -r requirements.txt` (there are no dependencies) |
+| Start command | `python3 -m connect4.web --host 0.0.0.0 --port $PORT --no-browser` |
+
+`--host 0.0.0.0` accepts connections from outside the machine, and `--port`
+uses the port the platform provides (the server also reads `$PORT` by itself).
+
 ## Project structure
 
 ```

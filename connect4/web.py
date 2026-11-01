@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import threading
 import webbrowser
 from http import HTTPStatus
@@ -171,17 +172,26 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         prog="connect4.web", description="Play Connect 4 against the AI in your browser."
     )
-    parser.add_argument("--port", type=int, default=8000, help="port to listen on (default: 8000)")
+    parser.add_argument(
+        "--host", default="127.0.0.1",
+        help="address to listen on; use 0.0.0.0 when deploying (default: 127.0.0.1)",
+    )
+    parser.add_argument(
+        "--port", type=int, default=int(os.environ.get("PORT", 8000)),
+        help="port to listen on (default: $PORT if set, otherwise 8000)",
+    )
     parser.add_argument("--no-browser", action="store_true", help="don't open a browser tab")
     args = parser.parse_args(argv)
 
     try:
-        server = create_server("127.0.0.1", args.port)
-    except OSError:
-        parser.exit(1, f"Port {args.port} is in use. Try: python3 -m connect4.web --port 8001\n")
+        server = create_server(args.host, args.port)
+    except OSError as error:
+        parser.exit(1, f"Could not start on {args.host}:{args.port} ({error.strerror}). "
+                       f"Try another port, e.g. --port {args.port + 1}\n")
 
     url = f"http://127.0.0.1:{args.port}"
-    print(f"Connect 4 is running at {url}  (press Ctrl+C to stop)")
+    # flush so the message shows up immediately in hosting platform logs
+    print(f"Connect 4 is running at {url}  (press Ctrl+C to stop)", flush=True)
     if not args.no_browser:
         threading.Timer(0.5, webbrowser.open, args=(url,)).start()
 
