@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connect 4 AI</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="human-red">
+  <main class="layout">
+    <section class="game">
+      <header class="title">
+        <h1>Connect&nbsp;4</h1>
+        <p class="subtitle">against minimax · alpha-beta pruning · iterative deepening</p>
+      </header>
+
+      <div class="status" id="status" role="status" aria-live="polite">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-text">Your move</span>
+      </div>
+
+      <div class="board-area">
+        <div class="preview-row" aria-hidden="true">
+          <div class="disc ghost" id="ghost"></div>
+        </div>
+        <div class="board-shell">
+          <div class="board" id="board">
+            <div class="discs" id="discs"></div>
+            <div class="frame" aria-hidden="true"></div>
+            <div class="columns" id="columns"></div>
+          </div>
+        </div>
+        <div class="column-labels" aria-hidden="true">
+          <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="card">
+        <h2>Game</h2>
+        <div class="field">
+          <span class="field-label">Difficulty</span>
+          <div class="segmented" id="difficulty">
+            <button type="button" data-value="easy">Easy</button>
+            <button type="button" data-value="medium">Medium</button>
+            <button type="button" data-value="hard">Hard</button>
+          </div>
+        </div>
+        <div class="field">
+          <span class="field-label">You play</span>
+          <div class="segmented" id="side">
+            <button type="button" data-value="0"><span class="chip red"></span>Red · first</button>
+            <button type="button" data-value="1"><span class="chip yellow"></span>Yellow · second</button>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="button" class="button primary" id="new-game">New game</button>
+          <button type="button" class="button" id="undo">Undo</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>AI analysis</h2>
+        <div class="eval">
+          <div class="eval-bar"><div class="eval-fill" id="eval-fill"></div></div>
+          <div class="eval-labels"><span>You</span><span>AI</span></div>
+        </div>
+        <p class="eval-text" id="eval-text">The AI hasn't moved yet.</p>
+        <dl class="stats">
+          <div><dt>Looked ahead</dt><dd id="stat-depth">–</dd></div>
+          <div><dt>Positions</dt><dd id="stat-nodes">–</dd></div>
+          <div><dt>Think time</dt><dd id="stat-time">–</dd></div>
+          <div><dt>Speed</dt><dd id="stat-speed">–</dd></div>
+        </dl>
+      </div>
+
+      <div class="card scoreboard">
+        <div><span class="score-value" id="score-human">0</span><span class="score-label">You</span></div>
+        <div><span class="score-value" id="score-draw">0</span><span class="score-label">Draws</span></div>
+        <div><span class="score-value" id="score-ai">0</span><span class="score-label">AI</span></div>
+      </div>
+
+      <p class="hint">Keyboard: <kbd>1</kbd>–<kbd>7</kbd> drop · <kbd>U</kbd> undo · <kbd>N</kbd> new game</p>
+    </aside>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

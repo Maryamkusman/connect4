@@ -1,0 +1,357 @@
+:root {
+  --bg: #0b1020;
+  --bg-glow: #18214a;
+  --text: #e8ebf7;
+  --muted: #8d95b5;
+  --card: rgba(255, 255, 255, 0.04);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --accent: #4f7cff;
+
+  --board: #2347c7;
+  --board-edge: #1a3699;
+  --hole: #0a0f22;
+
+  --red: #f0473e;
+  --red-light: #ff958c;
+  --red-dark: #a8170f;
+  --yellow: #fbc531;
+  --yellow-light: #fff0a8;
+  --yellow-dark: #c48a00;
+
+  --cell: min(84px, calc((100vw - 64px) / 7));
+  --disc: calc(var(--cell) * 0.8);
+  --disc-inset: calc(var(--cell) * 0.1);
+  --hole-radius: calc(var(--cell) * 0.38);
+}
+
+body.human-red    { --human-color: var(--red);    --ai-color: var(--yellow); }
+body.human-yellow { --human-color: var(--yellow); --ai-color: var(--red); }
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+  color: var(--text);
+  background: radial-gradient(ellipse at top, var(--bg-glow), var(--bg) 65%) fixed var(--bg);
+}
+
+button { font: inherit; color: inherit; }
+
+/* ------------------------------------------------------------------ layout */
+
+.layout {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 40px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 16px;
+}
+
+.game {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.title { text-align: center; }
+.title h1 { margin: 0; font-size: 2.4rem; letter-spacing: -0.02em; }
+.subtitle { margin: 6px 0 0; color: var(--muted); font-size: 0.92rem; }
+
+/* ------------------------------------------------------------------ status */
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  font-weight: 600;
+}
+
+.status-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--human-color);
+}
+.status.thinking .status-dot { background: var(--ai-color); animation: pulse 1s ease-in-out infinite; }
+.status.over .status-dot { display: none; }
+.status.error { color: #ff8a80; }
+
+/* ------------------------------------------------------------------- board */
+
+.board-area { display: flex; flex-direction: column; align-items: center; }
+
+.preview-row {
+  position: relative;
+  width: calc(var(--cell) * 7);
+  height: var(--cell);
+}
+
+.board-shell {
+  padding: calc(var(--cell) * 0.12);
+  border-radius: calc(var(--cell) * 0.3);
+  background: linear-gradient(180deg, var(--board), var(--board-edge));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.15);
+}
+
+.board {
+  position: relative;
+  width: calc(var(--cell) * 7);
+  height: calc(var(--cell) * 6);
+  background: var(--hole);
+  border-radius: calc(var(--cell) * 0.2);
+}
+
+/* The frame is a sheet of board colour with transparent holes punched in it,
+   drawn on top of the discs so they appear to fall behind the board. */
+.frame {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at center,
+      transparent 0 var(--hole-radius),
+      rgba(0, 0, 0, 0.35) calc(var(--hole-radius) + 0.5px),
+      var(--board) calc(var(--hole-radius) + 4px));
+  background-size: var(--cell) var(--cell);
+}
+
+.discs { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; }
+
+.columns { position: absolute; inset: 0; display: flex; }
+
+.column {
+  flex: 1;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: calc(var(--cell) * 0.2);
+  transition: background-color 0.15s;
+}
+.column:hover:not(:disabled) { background: rgba(255, 255, 255, 0.06); }
+.column:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.column:disabled { cursor: default; }
+.board.waiting .column:disabled { cursor: wait; }
+
+.column-labels {
+  display: flex;
+  width: calc(var(--cell) * 7);
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.column-labels span { flex: 1; text-align: center; }
+
+/* ------------------------------------------------------------------- discs */
+
+.disc {
+  position: absolute;
+  width: var(--disc);
+  height: var(--disc);
+  border-radius: 50%;
+  left: calc(var(--col) * var(--cell) + var(--disc-inset));
+  top: calc((5 - var(--row)) * var(--cell) + var(--disc-inset));
+  box-shadow: inset 0 0 0 calc(var(--cell) * 0.07) rgba(0, 0, 0, 0.12);
+}
+
+.disc.red    { background: radial-gradient(circle at 35% 30%, var(--red-light), var(--red) 45%, var(--red-dark)); }
+.disc.yellow { background: radial-gradient(circle at 35% 30%, var(--yellow-light), var(--yellow) 45%, var(--yellow-dark)); }
+
+.disc.dropping {
+  animation: drop 0.5s cubic-bezier(0.45, 0, 0.9, 0.5) both;
+}
+
+@keyframes drop {
+  0%   { transform: translateY(calc((var(--row) - 6.2) * var(--cell))); }
+  72%  { transform: translateY(0); }
+  86%  { transform: translateY(calc(var(--cell) * -0.12)); }
+  100% { transform: translateY(0); }
+}
+
+/* Marks the most recent move with a small ring. */
+.disc.last::after {
+  content: "";
+  position: absolute;
+  inset: 34%;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+}
+
+.board.finished .disc:not(.win) { filter: brightness(0.45) saturate(0.6); transition: filter 0.6s; }
+.disc.win { animation: win-glow 1.1s ease-in-out infinite alternate; }
+.disc.win.dropping { animation: drop 0.5s cubic-bezier(0.45, 0, 0.9, 0.5) both, win-glow 1.1s ease-in-out 0.5s infinite alternate; }
+
+@keyframes win-glow {
+  from { box-shadow: inset 0 0 0 calc(var(--cell) * 0.07) rgba(0, 0, 0, 0.12), 0 0 0 0 rgba(255, 255, 255, 0.0); }
+  to   { box-shadow: inset 0 0 0 calc(var(--cell) * 0.07) rgba(0, 0, 0, 0.12), 0 0 0 calc(var(--cell) * 0.06) rgba(255, 255, 255, 0.85); }
+}
+
+.ghost {
+  top: var(--disc-inset);
+  left: calc(var(--col, 3) * var(--cell) + var(--disc-inset));
+  opacity: 0;
+  transition: left 0.12s ease-out, opacity 0.15s;
+}
+.ghost.visible { opacity: 0.9; }
+
+/* ------------------------------------------------------------------ panel */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 320px;
+  max-width: 100%;
+  margin-top: 8px;
+}
+
+.card {
+  padding: 18px;
+  border-radius: 16px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+}
+
+.card h2 {
+  margin: 0 0 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.field { margin-bottom: 14px; }
+.field-label { display: block; margin-bottom: 6px; font-size: 0.85rem; color: var(--muted); }
+
+.segmented {
+  display: flex;
+  padding: 3px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.3);
+}
+.segmented button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.86rem;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+.segmented button:hover { color: var(--text); }
+.segmented button.active { background: rgba(255, 255, 255, 0.12); color: var(--text); font-weight: 600; }
+
+.chip { width: 10px; height: 10px; border-radius: 50%; }
+.chip.red { background: var(--red); }
+.chip.yellow { background: var(--yellow); }
+
+.actions { display: flex; gap: 10px; }
+
+.button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.06);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, opacity 0.15s;
+}
+.button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.12); }
+.button:disabled { opacity: 0.4; cursor: default; }
+.button.primary { background: var(--accent); border-color: transparent; }
+.button.primary:hover:not(:disabled) { background: #6a91ff; }
+
+/* --------------------------------------------------------------- analysis */
+
+.eval-bar {
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--human-color);
+}
+.eval-bar::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(11, 16, 32, 0.6);
+}
+.eval-fill {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  background: var(--ai-color);
+  transition: width 0.6s ease;
+}
+.eval-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.eval-text { margin: 12px 0 14px; font-size: 0.92rem; line-height: 1.4; }
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0;
+}
+.stats div { padding: 10px; border-radius: 10px; background: rgba(0, 0, 0, 0.25); }
+.stats dt { font-size: 0.72rem; color: var(--muted); }
+.stats dd { margin: 4px 0 0; font-size: 1.05rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.scoreboard { display: flex; justify-content: space-around; text-align: center; }
+.score-value { display: block; font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.score-label { font-size: 0.78rem; color: var(--muted); }
+
+.hint { margin: 0; text-align: center; font-size: 0.8rem; color: var(--muted); }
+kbd {
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.06);
+  font-family: inherit;
+  font-size: 0.75rem;
+}
+
+@keyframes pulse {
+  50% { transform: scale(0.7); opacity: 0.6; }
+}
+
+@media (max-width: 720px) {
+  .layout { padding-top: 24px; gap: 24px; }
+  .title h1 { font-size: 1.9rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disc.dropping, .disc.win, .disc.win.dropping, .status.thinking .status-dot { animation: none; }
+  .disc.win { box-shadow: 0 0 0 calc(var(--cell) * 0.06) rgba(255, 255, 255, 0.85); }
+  .ghost, .eval-fill { transition: none; }
+}
