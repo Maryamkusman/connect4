@@ -35,7 +35,7 @@ cd connect4
 python3 -m connect4.web
 ```
 
-This starts a local server and opens the game at <http://127.0.0.1:8000>.
+This starts a server and opens the game at <[http://127.0.0.1:8000](https://connect4-7a9u.onrender.com)>.
 Click a column (or press `1`–`7`) to drop a disc. The side panel lets you pick
 the difficulty and your colour, and shows the AI's analysis after each move:
 who it thinks is winning, how far ahead it looked, and how many positions it
